@@ -2,21 +2,26 @@
 
 ReverseBurn and ExplosionAnnouncer (l4d_ReverseBurn_and_ExplosionAnnouncer) by Mystik Spiral and Marttt
 
-This Left4Dead2 SourceMod plugin reverses damage if the victim is burned immediately and continously.  It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.
+This Left4Dead2 SourceMod plugin reverses damage if the victim is burned instantly and continously.
+It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.
 
 
-Objectives:
+Features:
 
-- Burn damage is reversed only if victims are burned within the first second of ignition.
-- Burn damage is no longer reversed if victim gets out of the fire for more than a second.
-- Do not burn anyone during first second of fire while attacker/victim burn array is populated.
-- If burn damage is being reversed, damage is 75% for attacker, 25% for victims if not incapped or at 1 health.
-- Do not burn bots but make them move out of the fire.
+- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continously.
+- If burn victim gets out of the fire for more than a second (or fire goes out), burn damage stops being reversed.
+- When burn damage is reversed, during each burn cycle:
+	* Attacker takes 70% damage for each instantly/continously burned victim
+	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.
+	* To get victims out of fire, if >1PermHP convert 1PermHP to 2TempHP, otherwise if >1TempHP remove 1TempHP.
+	* Already incapped burn victims or burn victims with only 1TotalHP do not take any burn damage.
+- Bots do not take burn damage but do move out of the fire as quickly as possible.
+- In all other scenarios, burn damage behaves normally.
 
 
 Common Scenarios:
 
-- Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 225% damage (75% per victim x 3 victims) plus possibly additional self-damage, and the victims each only take 25% if not incapped or at 1 health.
+- Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 210% damage (70% per victim x 3 victims) plus possibly additional self-damage.
 Usual end result: griefer is killed or incapped and everyone else takes only minor damage.
 
 - Player starts fire and griefer runs into it.
@@ -25,7 +30,7 @@ Usual end result: griefer takes 100% damage and player that started fire takes n
 
 Suggestion:
 
-Use this plugin along with "Reverse Friendly-Fire" (l4d_reverse_ff) and "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer) to minimize griefer damage.
+Use this plugin along with "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer) and "Reverse Friendly-Fire" (l4d_reverse_ff) to minimize griefer impact.  When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
 
 
 Credits:
@@ -139,8 +144,10 @@ static ConVar g_hCvar_BarricadeGascan;
 static ConVar g_hCvar_GasPump;
 static ConVar g_hCvar_FireworksCrate;
 
+static ConVar g_hCvar_PillsDecayRate;	//MS
+
 // ====================================================================================================
-// Timer Handles
+// Handles
 // ====================================================================================================
 Handle g_hBeginBurn[MAXPLAYERS + 1];	//MS
 Handle g_hFinishBurn[MAXPLAYERS + 1];	//MS
@@ -163,6 +170,7 @@ static bool g_bCvar_OxygenTank;
 static bool g_bCvar_BarricadeGascan;
 static bool g_bCvar_GasPump;
 static bool g_bCvar_FireworksCrate;
+
 static bool g_bFirstBurn[MAXPLAYERS + 1];		//MS
 static bool g_bReverseBurnAtk[MAXPLAYERS + 1];	//MS
 static bool g_bReverseBurnVic[MAXPLAYERS + 1];	//MS
@@ -178,6 +186,7 @@ static int g_iModel_BarricadeGascan = -1;
 static int g_iModel_GasPump = -1;
 static int g_iModel_FireworksCrate = -1;
 static int g_iCvar_Team;
+
 static int g_iBurnVictim[MAXPLAYERS + 1];	//MS
 
 // ====================================================================================================
@@ -185,8 +194,9 @@ static int g_iBurnVictim[MAXPLAYERS + 1];	//MS
 // ====================================================================================================
 static float g_fCvar_SpamProtection;
 static float gc_fLastChatOccurrence[MAXPLAYERS+1][MAX_TYPES+1];
+
 static float g_fLastRevBurnTime[MAXPLAYERS + 1];	//MS
-static float g_fCvar_pain_pills_decay_rate;			//MS
+static float g_fPillsDecayRate;						//MS
 
 // ====================================================================================================
 // entity - Plugin Variables
@@ -234,7 +244,9 @@ public void OnPluginStart()
     g_hCvar_GasPump            = CreateConVar("RBaEA_gaspump", "1", "Output to the chat every time someone explodes (last hit) a gas pump.\n0 = OFF, 1 = ON.", CVAR_FLAGS, true, 0.0, true, 1.0);
     if (g_bL4D2)
         g_hCvar_FireworksCrate = CreateConVar("RBaEA_fireworkscrate", "1", "Output to the chat every time someone explodes (last hit) a fireworks crate.\nL4D2 only.\n0 = OFF, 1 = ON.", CVAR_FLAGS, true, 0.0, true, 1.0);
-
+        
+    g_hCvar_PillsDecayRate = FindConVar("pain_pills_decay_rate");	//MS
+    
     // Hook plugin ConVars change
     g_hCvar_Enabled.AddChangeHook(Event_ConVarChanged);
     g_hCvar_SpamProtection.AddChangeHook(Event_ConVarChanged);
@@ -250,7 +262,7 @@ public void OnPluginStart()
     if (g_bL4D2)
         g_hCvar_FireworksCrate.AddChangeHook(Event_ConVarChanged);
         
-    HookConVarChange(FindConVar("pain_pills_decay_rate"), PainPillsDecayRateChanged);	//MS
+    g_hCvar_PillsDecayRate.AddChangeHook(Event_ConVarChanged);		//MS
 
     // Load plugin configs from .cfg
     AutoExecConfig(true, CONFIG_FILENAME);
@@ -324,6 +336,8 @@ public void GetCvars()
     g_bCvar_GasPump = g_hCvar_GasPump.BoolValue;
     if (g_bL4D2)
         g_bCvar_FireworksCrate = g_hCvar_FireworksCrate.BoolValue;
+        
+    g_fPillsDecayRate = g_hCvar_PillsDecayRate.FloatValue;		//MS
 }
 
 /****************************************************************************************************/
@@ -598,8 +612,7 @@ public void OutputMessage(int attacker, int type)
     if ((!g_bFirstBurn[attacker]) && !(type == TYPE_PROPANECANISTER || type == TYPE_OXYGENTANK))	//MS
     {																								//MS
         g_bFirstBurn[attacker] = true;																//MS
-        g_hBeginBurn[attacker] = CreateTimer(1.0, BeginBurnTimer, attacker);						//MS
-        //PrintToServer("OnKilled - Atk: %i %N", attacker, attacker);								//MS
+        g_hBeginBurn[attacker] = CreateTimer(0.75, BeginBurnTimer, attacker);						//MS
     }																								//MS
 	
     if (g_bCvar_SpamProtection)
@@ -950,12 +963,10 @@ public void CPrintToChat(int client, char[] message, any ...)
 
 public void OnAllPluginsLoaded()
 {
-	if (FindConVar("l4d_explosion_announcer_version") !=INVALID_HANDLE)
+	if (FindConVar("l4d_explosion_announcer_version") != null)
 	{
-		SetFailState("The \"l4d_ReverseBurn_and_ExplosionAnnouncer\" plugin conflicts with the \"l4d_explosion_announcer\" plugin, use only one of these plugins, not both");
+		SetFailState("The \"l4d_ReverseBurn_and_ExplosionAnnouncer\" plugin cannot be used with the \"l4d_explosion_announcer\" plugin, use only one of these plugins, not both");
 	}
-	
-	g_fCvar_pain_pills_decay_rate = GetConVarFloat(FindConVar("pain_pills_decay_rate"));
 }
 
 public void OnClientPutInServer(int client)
@@ -968,7 +979,7 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 	//check valid victim and attacker and not self damage
 	if (IsValidClientAndInGameAndSurvivor(victim) && IsValidClientAndInGameAndSurvivor(attacker) && victim != attacker)
 	{
-		//PrintToServer("PlyrDmg - Vic: %i %N, Atk: %i %N, FstBrn: %b, RvsBrnAtk: %b, RvsBrnVic: %b, Dmg: %f", victim, victim, attacker, attacker, g_bFirstBurn[attacker], g_bReverseBurnAtk[attacker], g_bReverseBurnVic[victim], damage);
+		//PrintToServer("PlyrDmg - Vic: %i %N, Atk: %i %N, FrstBurn: %b, RvsBurnAtk: %b, RvsBurnVic: %b, Dmg: %f", victim, victim, attacker, attacker, g_bFirstBurn[attacker], g_bReverseBurnAtk[attacker], g_bReverseBurnVic[victim], damage);
 		//check for burn damage
 		if (damagetype & DMG_BURN)
 		{
@@ -984,32 +995,51 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 			//was victim damage last reversed more than a second ago
 			if ((fGameTime - g_fLastRevBurnTime[victim] > 1.0) && (g_fLastRevBurnTime[victim] != 0))
 			{
-				//if victim not burned in last second then do not reverse burn damage for them
+				//if victim not burned in last second then handle normal, not reversed
 				g_bReverseBurnVic[victim] = false;
 			}
 			//if both attacker and victim reverse burn flags match then reverse burn
 			if (g_bReverseBurnAtk[attacker] && g_bReverseBurnVic[victim])
 			{
 				//set the percent amount of damage for attacker and victim
-				float fAttackerDamage = damage * 0.75;
-				float fVictimDamage = damage * 0.25;
+				float fAttackerDamage = damage * 0.7;
 				int iVictimPermHealth = GetClientHealth(victim);
-				int iVictimTotalHealth = iVictimPermHealth + RoundToCeil(GetClientTempHealth(victim));
-				//do not burn victim already incapped or with only 1 health
-				if ((IsClientIncapped(victim)) || (iVictimTotalHealth - RoundToFloor(fVictimDamage) < 2))
+				int iVictimTempHealth = GetClientTempHealth(victim);
+				int iVictimTotalHealth = iVictimPermHealth + iVictimTempHealth;
+				//PrintToServer("Vic: %N, Perm: %i, Temp: %i, Totl: %i", victim, iVictimPermHealth, iVictimTempHealth, iVictimTotalHealth);
+				//do not burn victim if incapped or with only 1 health
+				if ((IsClientIncapped(victim)) || (iVictimTotalHealth < 2))
 				{
-					fVictimDamage = 0.0;
+					SDKHooks_TakeDamage(victim, inflictor, attacker, 0.0, damagetype, weapon, damageForce, damagePosition);
+					SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
+					g_fLastRevBurnTime[victim] = GetGameTime();
+					return Plugin_Handled;
 				}
-				//give standing bots 1 health then damage them for 1 health so they move out of fire
-				if  ((!IsClientIncapped(victim)) && (IsFakeClient(victim)))
+				//give standing bot victim 1 health then burn them for 1 health so they move out of fire
+				if  (IsFakeClient(victim))
 				{
 					SetEntityHealth(victim, iVictimPermHealth + 1);
-					fVictimDamage = 1.0;
+					SDKHooks_TakeDamage(victim, inflictor, attacker, 1.0, damagetype, weapon, damageForce, damagePosition);
+					SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
+					g_fLastRevBurnTime[victim] = GetGameTime();
+					return Plugin_Handled;
 				}
-				//deal damage to both attacker (reverse damage) and victim (incentive to move out of fire)
+				//as incentive for standing victims to get out of the fire quickly...
+				//if >1 PermHP remove 1PermHP and add 2TempHP, otherwise if >1 TempHP remove 1TempHP
+				if (iVictimPermHealth > 1)
+				{
+					SetEntityHealth(victim, iVictimPermHealth - 1);
+					if (iVictimTempHealth < 99)
+					{
+						SetClientTempHealth(victim, iVictimTempHealth + 2);
+					}
+				}
+				else if (iVictimTempHealth > 1)
+				{
+					SetClientTempHealth(victim, iVictimTempHealth - 1);
+				}
+				SDKHooks_TakeDamage(victim, inflictor, attacker, 0.0, damagetype, weapon, damageForce, damagePosition);
 				SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
-				SDKHooks_TakeDamage(victim, inflictor, attacker, fVictimDamage, damagetype, weapon, damageForce, damagePosition);
-				//set the last time the victim damage was reversed
 				g_fLastRevBurnTime[victim] = GetGameTime();
 				return Plugin_Handled;
 			}
@@ -1041,14 +1071,13 @@ public Action BeginBurnTimer(Handle timer, int client)
 			g_bReverseBurnVic[iVictim] = true;
 			//pack both the attacker and victim so it can be passed to FinishBurnTimer
 			DataPack pack;
-			g_hFinishBurn[iAttacker] = CreateDataTimer(16.0, FinishBurnTimer, pack);
+			g_hFinishBurn[iAttacker] = CreateDataTimer(15.25, FinishBurnTimer, pack);
 			pack.WriteCell(iAttacker);
 			pack.WriteCell(iVictim);
 			//clear the burn victim set by OnTakeDamage_Player
 			g_iBurnVictim[iVictim] = 0;
 			//clear the time burn damage was last reversed for victim
 			g_fLastRevBurnTime[iVictim] = 0.0;
-			//PrintToServer("BeginBurn - Vic: %i %N, Atk: %i %N", iVictim, iVictim, iAttacker, iAttacker);
 		}
 	}
 	//clear flag that indicates first second of burnable being ignited
@@ -1073,14 +1102,15 @@ public Action FinishBurnTimer(Handle timer, DataPack pack)
 	{
 		if (IsValidClientAndInGameAndSurvivor(iVictim))
 		{
-			PrintToChat(iAttacker, "[RBaEA] You attacked %N, burn damage was reversed", iVictim);
+			//PrintToChat(iAttacker, "[RBaEA] You instantly burned %N, damage was reversed", iVictim);
+			CPrintToChat(iAttacker, "%T", "BurnVictimName", iAttacker, iVictim);
 		}
 		else
 		{
-			PrintToChat(iAttacker, "[RBaEA] You attacked a teammate, burn damage was reversed");
+			//PrintToChat(iAttacker, "[RBaEA] You instantly burned a teammate, damage was reversed");
+			CPrintToChat(iAttacker, "%T", "BurnTeammate", iAttacker);
 		}
 	}
-	//PrintToServer("FinishBurn - Vic: %i %N, Atk: %i %N", iVictim, iVictim, iAttacker, iAttacker);
 }
 
 stock bool IsValidClientAndInGameAndSurvivor(int client)
@@ -1093,23 +1123,17 @@ stock bool IsClientIncapped(int client)
 	return !!GetEntProp(client, Prop_Send, "m_isIncapacitated", 1);
 }
 
-float GetClientTempHealth(int client)
+int GetClientTempHealth(int client)
 {
-    float fHealth = GetEntPropFloat(client, Prop_Send, "m_healthBuffer");
-    fHealth -= (GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * g_fCvar_pain_pills_decay_rate;
-    return fHealth < 0.0 ? 0.0 : fHealth;
+	int iTempHealth = RoundToCeil(GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - ((GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * g_fPillsDecayRate)) - 1;
+	return iTempHealth < 0 ? 0 : iTempHealth;
 }
 
-public void PainPillsDecayRateChanged(ConVar convar, const char[] oldValue, const char[] newValue)
+public void SetClientTempHealth(int client, int iTempHealth)
 {
-    g_fCvar_pain_pills_decay_rate = GetConVarFloat(convar);
+	float fTempHealth = iTempHealth * 1.0;
+	SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", GetGameTime());
+	SetEntPropFloat(client, Prop_Send, "m_healthBuffer", fTempHealth);
 }
-
-//public void SetTempHealth(int client, int iHealth)
-//{
-//	SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", GetGameTime());
-//	float fTempHealth = iHealth * 1.0;
-//	SetEntPropFloat(client, Prop_Send, "m_healthBuffer", fTempHealth);
-//}
 
 /****************************************************************************************************/
