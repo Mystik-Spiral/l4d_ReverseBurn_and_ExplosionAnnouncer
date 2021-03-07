@@ -23,12 +23,10 @@ Usual end result: griefer takes 100% damage and player that started fire takes n
 
 Suggestion:  
 
-Use this plugin along with...  
+Use this plugin in conjunction with:  
 
 "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)  
-
 ...and...  
-
 "Reverse Friendly-Fire" (l4d_reverse_ff)  
 
 When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
