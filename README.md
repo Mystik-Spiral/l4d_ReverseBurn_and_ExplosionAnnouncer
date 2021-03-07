@@ -9,7 +9,7 @@ Features:
 - If burn victim gets out of the fire for more than a second (or fire goes out), burn damage stops being reversed.
 - When burn damage is reversed, during each burn cycle:
 	* Attacker takes 70% damage for each instantly/continously burned victim
-	* To get victims out of fire, if >1PermHP convert 1PermHP to 2TempHP, otherwise if >1TempHP remove 1TempHP.
+	* To get victims out of fire, convert 1PermHP to 2TempHP.
 	* Already incapped burn victims or burn victims with only 1TotalHP do not take any burn damage.
 - Bots do not take burn damage but do move out of the fire as quickly as possible.
 - In all other scenarios, burn damage behaves normally.
