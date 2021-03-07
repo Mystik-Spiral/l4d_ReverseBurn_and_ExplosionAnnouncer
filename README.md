@@ -22,6 +22,7 @@ Usual end result: griefer is killed or incapped and everyone else takes only min
 Usual end result: griefer takes 100% damage and player that started fire takes none, which is normal behavior.
 
 Suggestion:  
+
 Use this plugin along with...  
 
 "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)  
