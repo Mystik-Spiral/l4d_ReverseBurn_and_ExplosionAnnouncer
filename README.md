@@ -22,7 +22,17 @@ Usual end result: griefer is killed or incapped and everyone else takes only min
 Usual end result: griefer takes 100% damage and player that started fire takes none, which is normal behavior.
 
 Suggestion:  
-Use this plugin along with "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer) and "Reverse Friendly-Fire" (l4d_reverse_ff) to minimize griefer impact.  When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
+Use this plugin along with...  
+
+"ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)  
+
+...and...  
+
+"Reverse Friendly-Fire" (l4d_reverse_ff)  
+
+...to minimize griefer impact.  
+
+When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
 
 Credits:  
 This plugin began life as "Explosion Announcer" by Marttt.  None of the original code was changed, I just added the Reverse Burn feature to it since it already kept track of when an entity was exploded and announced who did it.  I hooked on to that announcement to track whether that explosion burned other players.  
