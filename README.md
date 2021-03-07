@@ -30,8 +30,6 @@ Use this plugin along with...
 
 "Reverse Friendly-Fire" (l4d_reverse_ff)  
 
-...to minimize griefer impact.  
-
 When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
 
 Credits:  
