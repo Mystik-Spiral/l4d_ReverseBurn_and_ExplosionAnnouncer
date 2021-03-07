@@ -25,9 +25,9 @@ Suggestion:
 
 Use this plugin in conjunction with:  
 
-"ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)  
+**[ReverseBurn and ThrowableAnnouncer](https://forums.alliedmods.net/showthread.php?t=TBD)** (l4d_ReverseBurn_and_ThrowableAnnouncer)  
 ...and...  
-"Reverse Friendly-Fire" (l4d_reverse_ff)  
+**[Reverse Friendly-Fire](https://forums.alliedmods.net/showthread.php?t=329035)** (l4d_reverse_ff)  
 
 When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
 
@@ -35,6 +35,7 @@ Credits:
 This plugin began life as "Explosion Announcer" by Marttt.  None of the original code was changed, I just added the Reverse Burn feature to it since it already kept track of when an entity was exploded and announced who did it.  I hooked on to that announcement to track whether that explosion burned other players.  
 
 Want to contribute code enhancements?
-Create a pull request using this GitHub repository: https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer  
+Create a pull request using this GitHub repository:  
+https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer  
 
 Plugin discussion: https://forums.alliedmods.net/showthread.php?t=TBD
