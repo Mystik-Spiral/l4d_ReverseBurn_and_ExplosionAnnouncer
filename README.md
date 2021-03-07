@@ -17,6 +17,7 @@ Features:
 Common Scenarios:  
 - Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 210% damage (70% per victim x 3 victims) plus possibly additional self-damage.  
 Usual end result: Griefer is killed or incapped and everyone else takes only minor damage.  
+
 - Player starts fire and griefer runs into it.  
 Usual end result: Griefer takes 100% burn damage and player that started fire takes none, which is normal behavior.  
 
