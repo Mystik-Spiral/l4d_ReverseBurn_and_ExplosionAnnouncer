@@ -39,4 +39,4 @@ Want to contribute code enhancements?
 Create a pull request using this GitHub repository:  
 https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer  
 
-Plugin discussion: https://forums.alliedmods.net/showthread.php?t=TBD
+Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
