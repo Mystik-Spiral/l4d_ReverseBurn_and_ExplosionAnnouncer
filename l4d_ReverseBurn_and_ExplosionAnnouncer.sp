@@ -2,18 +2,22 @@
 
 ReverseBurn and ExplosionAnnouncer (l4d_ReverseBurn_and_ExplosionAnnouncer) by Mystik Spiral and Marttt
 
-This Left4Dead2 SourceMod plugin reverses damage if the victim is burned instantly and continously.
+Left4Dead2 SourceMod plugin reverses damage if the victim is burned instantly and continuously.
 It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.
+
+Reverses the following explodable burn types:
+Gas can, barricade gas can, fuel barrel, gas pump, and fireworks crate.
+
+Announces the following explosion types:
+Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank, and oxygen tank.
 
 
 Features:
-
-- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continously.
+- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continuously.
 - If burn victim gets out of the fire for more than a second (or fire goes out), burn damage stops being reversed.
-- When burn damage is reversed, during each burn cycle:
-	* Attacker takes 70% damage for each instantly/continously burned victim
+- When burn damage is reversed, during each burn cycle (approx 6x per second):
+	* Attacker takes 70% damage for each instantly/continuously burned victim
 	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.
-	* To get victims out of fire, if >1PermHP convert 1PermHP to 2TempHP, otherwise if >1TempHP remove 1TempHP.
 	* Already incapped burn victims or burn victims with only 1TotalHP do not take any burn damage.
 - Bots do not take burn damage but do move out of the fire as quickly as possible.
 - In all other scenarios, burn damage behaves normally.
@@ -21,26 +25,34 @@ Features:
 
 Common Scenarios:
 
-- Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 210% damage (70% per victim x 3 victims) plus possibly additional self-damage.
-Usual end result: griefer is killed or incapped and everyone else takes only minor damage.
+- Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage.
+Usual end result: Griefer is killed or incapped and everyone else takes relatively minor damage.
 
 - Player starts fire and griefer runs into it.
-Usual end result: griefer takes 100% damage and player that started fire takes none, which is normal behavior.
+Usual end result: Griefer takes 100% damage and player that started the fire takes none, which is normal behavior.
 
 
 Suggestion:
 
-Use this plugin along with "ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer) and "Reverse Friendly-Fire" (l4d_reverse_ff) to minimize griefer impact.  When these plugins are combined, griefers cannot inflict friendly-fire, molotov (throwable burns), or gascan (explosion type burns) damage, yet skilled players will likely not notice any difference in game play.
+To minimize griefer impact, use this plugin along with...
+
+"ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)
+...and...
+"Reverse Friendly-Fire" (l4d_reverse_ff)
+
+When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for molotov and explodable burn types (gascans, fireworks, etc.).
+Although griefers will take significant damage, other players may not notice any difference in game play.
 
 
 Credits:
 
-This plugin began life as "Explosion Announcer" by Marttt.  None of the original code was changed, I just added the Reverse Burn feature to it since it already kept track of when an entity was exploded and announced who did it.  I hooked on to that announcement to track whether that explosion burned other players.
+This plugin began life as "Explosion Announcer" by Marttt.  The original plugin kept track of explodable entities, when they were exploded, and announced who did it. I hooked on to that announcement to track whether that explodable (gascan, fireworks, etc.) instantly burned any other players, and if so, to ensure the attacker took the vast majority of the damage. If no other players are instantly burned, then burn damage is treated normally.
 
 Want to contribute code enhancements?
-Create a pull request using this GitHub repository: https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer
+Create a pull request using this GitHub repository:
+https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer
 
-Plugin discussion: https://forums.alliedmods.net/showthread.php?t=TBD
+Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
 
 */
 
@@ -49,9 +61,9 @@ Plugin discussion: https://forums.alliedmods.net/showthread.php?t=TBD
 // ====================================================================================================
 #define PLUGIN_NAME                   "[L4D & L4D2] ReverseBurn and ExplosionAnnouncer"
 #define PLUGIN_AUTHOR                 "Mystik Spiral and Marttt"
-#define PLUGIN_DESCRIPTION            "Reverses damage when victim burned immediately and continously"
+#define PLUGIN_DESCRIPTION            "Reverses damage when victim burned instantly and continuously"
 #define PLUGIN_VERSION                "1.0"
-#define PLUGIN_URL                    "https://forums.alliedmods.net/showthread.php?t=TBD"
+#define PLUGIN_URL                    "https://forums.alliedmods.net/showthread.php?t=331164"
 
 // ====================================================================================================
 // Plugin Info
@@ -144,13 +156,13 @@ static ConVar g_hCvar_BarricadeGascan;
 static ConVar g_hCvar_GasPump;
 static ConVar g_hCvar_FireworksCrate;
 
-static ConVar g_hCvar_PillsDecayRate;	//MS
+static ConVar g_hCvar_PillsDecayRate;				//MS
 
 // ====================================================================================================
 // Handles
 // ====================================================================================================
-Handle g_hBeginBurn[MAXPLAYERS + 1];	//MS
-Handle g_hFinishBurn[MAXPLAYERS + 1];	//MS
+Handle g_hBeginBurn[MAXPLAYERS + 1];				//MS
+Handle g_hFinishBurn[MAXPLAYERS + 1];				//MS
 
 // ====================================================================================================
 // bool - Plugin Variables
@@ -171,9 +183,11 @@ static bool g_bCvar_BarricadeGascan;
 static bool g_bCvar_GasPump;
 static bool g_bCvar_FireworksCrate;
 
-static bool g_bFirstBurn[MAXPLAYERS + 1];		//MS
-static bool g_bReverseBurnAtk[MAXPLAYERS + 1];	//MS
-static bool g_bReverseBurnVic[MAXPLAYERS + 1];	//MS
+static bool g_bFirstBurn[MAXPLAYERS + 1];			//MS
+static bool g_bReverseBurnAtk[MAXPLAYERS + 1];		//MS
+static bool g_bReverseBurnVic[MAXPLAYERS + 1];		//MS
+static bool g_bBothRBPlugins;						//MS
+static bool g_bAllReversePlugins;					//MS
 
 // ====================================================================================================
 // int - Plugin Variables
@@ -187,7 +201,7 @@ static int g_iModel_GasPump = -1;
 static int g_iModel_FireworksCrate = -1;
 static int g_iCvar_Team;
 
-static int g_iBurnVictim[MAXPLAYERS + 1];	//MS
+static int g_iBurnVictim[MAXPLAYERS + 1];			//MS
 
 // ====================================================================================================
 // float - Plugin Variables
@@ -399,7 +413,6 @@ public void OnClientDisconnect(int client)
 	{
 		gc_fLastChatOccurrence[client][type] = 0.0;
 	}
-	SDKUnhook(client, SDKHook_OnTakeDamage, OnTakeDamage_Player);	//MS - is this needed?
 }
 
 /****************************************************************************************************/
@@ -410,7 +423,6 @@ public void LateLoad()
 
     if (g_bL4D2)
     {
-        // There is no weapon_gascan entity in L4D1
         entity = INVALID_ENT_REFERENCE;
         while ((entity = FindEntityByClassname(entity, CLASSNAME_WEAPON_GASCAN)) != INVALID_ENT_REFERENCE)
         {
@@ -967,6 +979,14 @@ public void OnAllPluginsLoaded()
 	{
 		SetFailState("The \"l4d_ReverseBurn_and_ExplosionAnnouncer\" plugin cannot be used with the \"l4d_explosion_announcer\" plugin, use only one of these plugins, not both");
 	}
+	if (FindConVar("RBaTA_version") != null)
+	{
+		g_bBothRBPlugins = true;
+		if (FindConVar("reverseff_version"))
+		{
+			g_bAllReversePlugins = true;
+		}
+	}
 }
 
 public void OnClientPutInServer(int client)
@@ -1006,7 +1026,7 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				int iVictimPermHealth = GetClientHealth(victim);
 				int iVictimTempHealth = GetClientTempHealth(victim);
 				int iVictimTotalHealth = iVictimPermHealth + iVictimTempHealth;
-				//PrintToServer("Vic: %N, Perm: %i, Temp: %i, Totl: %i", victim, iVictimPermHealth, iVictimTempHealth, iVictimTotalHealth);
+				PrintToServer("Vic: %N, Perm: %i, Temp: %i, Totl: %i", victim, iVictimPermHealth, iVictimTempHealth, iVictimTotalHealth);
 				//do not burn victim if incapped or with only 1 health
 				if ((IsClientIncapped(victim)) || (iVictimTotalHealth < 2))
 				{
@@ -1029,9 +1049,13 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				if (iVictimPermHealth > 1)
 				{
 					SetEntityHealth(victim, iVictimPermHealth - 1);
-					if (iVictimTempHealth < 99)
+					if (iVictimPermHealth < 99 && iVictimTempHealth < 99 && iVictimTotalHealth < 100)
 					{
 						SetClientTempHealth(victim, iVictimTempHealth + 2);
+					}
+					else
+					{
+						SetClientTempHealth(victim, iVictimTempHealth + 1);
 					}
 				}
 				else if (iVictimTempHealth > 1)
@@ -1102,13 +1126,29 @@ public Action FinishBurnTimer(Handle timer, DataPack pack)
 	{
 		if (IsValidClientAndInGameAndSurvivor(iVictim))
 		{
-			//PrintToChat(iAttacker, "[RBaEA] You instantly burned %N, damage was reversed", iVictim);
-			CPrintToChat(iAttacker, "%T", "BurnVictimName", iAttacker, iVictim);
+			if (g_bBothRBPlugins)
+			{
+				char sPluginName[13] = "[ReverseBurn]";
+				CPrintToChat(iAttacker, "%T", "BurnVictimName", iAttacker, sPluginName, iVictim);
+			}
+			else
+			{
+				char sPluginName[7] = "[RBaEA]";
+				CPrintToChat(iAttacker, "%T", "BurnVictimName", iAttacker, sPluginName, iVictim);
+			}
 		}
 		else
 		{
-			//PrintToChat(iAttacker, "[RBaEA] You instantly burned a teammate, damage was reversed");
-			CPrintToChat(iAttacker, "%T", "BurnTeammate", iAttacker);
+			if (g_bBothRBPlugins)
+			{
+				char sPluginName[13] = "[ReverseBurn]";
+				CPrintToChat(iAttacker, "%T", "BurnTeammate", iAttacker, sPluginName);
+			}
+			else
+			{
+				char sPluginName[7] = "[RBaEA]";
+				CPrintToChat(iAttacker, "%T", "BurnTeammate", iAttacker, sPluginName);
+			}
 		}
 	}
 }
@@ -1125,7 +1165,7 @@ stock bool IsClientIncapped(int client)
 
 int GetClientTempHealth(int client)
 {
-	int iTempHealth = RoundToCeil(GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - ((GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * g_fPillsDecayRate)) - 1;
+	int iTempHealth = RoundToCeil(GetEntPropFloat(client, Prop_Send, "m_healthBuffer") - ((GetGameTime() - GetEntPropFloat(client, Prop_Send, "m_healthBufferTime")) * g_fPillsDecayRate));
 	return iTempHealth < 0 ? 0 : iTempHealth;
 }
 
@@ -1134,6 +1174,29 @@ public void SetClientTempHealth(int client, int iTempHealth)
 	float fTempHealth = iTempHealth * 1.0;
 	SetEntPropFloat(client, Prop_Send, "m_healthBufferTime", GetGameTime());
 	SetEntPropFloat(client, Prop_Send, "m_healthBuffer", fTempHealth);
+}
+
+public void OnClientPostAdminCheck(int client)
+{
+	CreateTimer(16.0, AnnouncePlugin, client);
+}
+
+public Action AnnouncePlugin(Handle timer, int client)
+{
+	//if all 3 plugins loaded, do not announce anything (announced in l4d_reverse_ff)
+	//if both ReverseBurn plugins loaded, announce burn damage
+	//if only RBaEA loaded, announce only explodable burn damage
+	if (IsClientInGame(client) && g_bCvar_Enabled)
+	{
+		if (g_bBothRBPlugins && !g_bAllReversePlugins)
+		{
+			CPrintToChat(client, "%T", "AnnounceBoth", client);
+		}
+		else if (!g_bAllReversePlugins)
+		{
+			CPrintToChat(client, "%T", "Announce", client);
+		}
+	}
 }
 
 /****************************************************************************************************/
