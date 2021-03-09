@@ -25,7 +25,7 @@ Suggestion:
 
 Use this plugin in conjunction with:  
 
-**[ReverseBurn and ThrowableAnnouncer](https://forums.alliedmods.net/showthread.php?t=TBD)** (l4d_ReverseBurn_and_ThrowableAnnouncer)  
+**[ReverseBurn and ThrowableAnnouncer](https://forums.alliedmods.net/showthread.php?t=331166)** (l4d_ReverseBurn_and_ThrowableAnnouncer)  
 ...and...  
 **[Reverse Friendly-Fire](https://forums.alliedmods.net/showthread.php?t=329035)** (l4d_reverse_ff)  
 
