@@ -1,8 +1,8 @@
 /*
 
-ReverseBurn and ExplosionAnnouncer (l4d_ReverseBurn_and_ExplosionAnnouncer) by Mystik Spiral and Marttt
+ReverseBurn and ExplosionAnnouncer (l4d_ReverseBurn_and_ExplosionAnnouncer) by Mystik Spiral
 
-Left4Dead2 SourceMod plugin reverses damage if the victim is burned instantly and continuously.
+Smart reverse of burn damage from explodables (gascans, fireworks, etc.) if the victim is burned instantly and continuously.
 It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.
 
 Reverses the following explodable burn types:
@@ -13,23 +13,24 @@ Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank
 
 
 Features:
-- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continuously.
-- If burn victim gets out of the fire for more than a second (or fire goes out), burn damage stops being reversed.
+- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continuously (takes burn damage more than once per second).
+- If player runs into fire more than 0.75 seconds after ignition, burn damage is treated normally.
 - When burn damage is reversed, during each burn cycle (approx 6x per second):
 	* Attacker takes 70% damage for each instantly/continuously burned victim
 	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.
-	* Already incapped burn victims or burn victims with only 1TotalHP do not take any burn damage.
+	* Before ignition, any players already incapped or with only 1TotalHP do not take any burn damage.
 - Bots do not take burn damage but do move out of the fire as quickly as possible.
+- Griefers cannot kill or incap a victim by burning them (victims still take some damage as stated above).
 - In all other scenarios, burn damage behaves normally.
 
 
 Common Scenarios:
 
-- Griefer attempts to kill the whole team by burning them. Instead, the griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage.
-Usual end result: Griefer is killed or incapped and everyone else takes relatively minor damage.
+- Griefer attempts to kill the whole team by burning them.
+Usual end result: Griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage and everyone else takes relatively minor damage.
 
-- Player starts fire and griefer runs into it.
-Usual end result: Griefer takes 100% damage and player that started the fire takes none, which is normal behavior.
+- Player starts fire (which does not burn anyone within 0.75 seconds) and griefer runs into it.
+Usual end result: Griefer takes normal damage and player that started the fire takes no damage.
 
 
 Suggestion:
@@ -40,8 +41,8 @@ To minimize griefer impact, use this plugin along with...
 ...and...
 "Reverse Friendly-Fire" (l4d_reverse_ff)
 
-When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for molotov and explodable burn types (gascans, fireworks, etc.).
-Although griefers will take significant damage, other players may not notice any difference in game play.
+When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for throwable (molotov) and explodable (gascans, fireworks, etc.) burn types.
+Although griefers will take significant damage, other players may not notice any difference in game play (other than laughing at stupid griefer fails).
 
 
 Credits:
@@ -60,9 +61,9 @@ Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
 // Plugin Info - define
 // ====================================================================================================
 #define PLUGIN_NAME                   "[L4D & L4D2] ReverseBurn and ExplosionAnnouncer"
-#define PLUGIN_AUTHOR                 "Mystik Spiral and Marttt"
+#define PLUGIN_AUTHOR                 "Mystik Spiral"
 #define PLUGIN_DESCRIPTION            "Reverses damage when victim burned instantly and continuously"
-#define PLUGIN_VERSION                "1.0"
+#define PLUGIN_VERSION                "1.1"
 #define PLUGIN_URL                    "https://forums.alliedmods.net/showthread.php?t=331164"
 
 // ====================================================================================================
@@ -188,6 +189,7 @@ static bool g_bReverseBurnAtk[MAXPLAYERS + 1];		//MS
 static bool g_bReverseBurnVic[MAXPLAYERS + 1];		//MS
 static bool g_bBothRBPlugins;						//MS
 static bool g_bAllReversePlugins;					//MS
+static bool g_bBurnToggle[MAXPLAYERS + 1];			//MS
 
 // ====================================================================================================
 // int - Plugin Variables
@@ -1003,12 +1005,12 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 		//check for burn damage
 		if (damagetype & DMG_BURN)
 		{
-			//check if burnable ignited in the last second by the current attacker
+			//check if burnable ignited in the last 0.75 second by the current attacker
 			if (g_bFirstBurn[attacker])
 			{
 				//set burn victim id to the attacker id
 				g_iBurnVictim[victim] = attacker;
-				//no damage dealt during first second of burn
+				//no damage dealt during first 0.75 second of burn
 				return Plugin_Handled;
 			}
 			float fGameTime = GetGameTime();
@@ -1026,7 +1028,7 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				int iVictimPermHealth = GetClientHealth(victim);
 				int iVictimTempHealth = GetClientTempHealth(victim);
 				int iVictimTotalHealth = iVictimPermHealth + iVictimTempHealth;
-				PrintToServer("Vic: %N, Perm: %i, Temp: %i, Totl: %i", victim, iVictimPermHealth, iVictimTempHealth, iVictimTotalHealth);
+				//PrintToServer("Vic: %N, Perm: %i, Temp: %i, Totl: %i", victim, iVictimPermHealth, iVictimTempHealth, iVictimTotalHealth);
 				//do not burn victim if incapped or with only 1 health
 				if ((IsClientIncapped(victim)) || (iVictimTotalHealth < 2))
 				{
@@ -1044,27 +1046,32 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 					g_fLastRevBurnTime[victim] = GetGameTime();
 					return Plugin_Handled;
 				}
-				//as incentive for standing victims to get out of the fire quickly...
-				//if >1 PermHP remove 1PermHP and add 2TempHP, otherwise if >1 TempHP remove 1TempHP
-				if (iVictimPermHealth > 1)
+				//inflict actual damage to burn victim only once every two calls from OnTakeDamage
+				if (!g_bBurnToggle[victim])
 				{
-					SetEntityHealth(victim, iVictimPermHealth - 1);
-					if (iVictimPermHealth < 99 && iVictimTempHealth < 99 && iVictimTotalHealth < 100)
+					//as incentive for standing victims to get out of the fire quickly...
+					//if >1 PermHP remove 1PermHP and add 2TempHP, otherwise if >1 TempHP remove 1TempHP
+					if (iVictimPermHealth > 1)
 					{
-						SetClientTempHealth(victim, iVictimTempHealth + 2);
+						SetEntityHealth(victim, iVictimPermHealth - 1);
+						if (iVictimPermHealth < 99 && iVictimTempHealth < 99 && iVictimTotalHealth < 100)
+						{
+							SetClientTempHealth(victim, iVictimTempHealth + 2);
+						}
+						else
+						{
+							SetClientTempHealth(victim, iVictimTempHealth + 1);
+						}
 					}
-					else
+					else if (iVictimTempHealth > 1)
 					{
-						SetClientTempHealth(victim, iVictimTempHealth + 1);
+						SetClientTempHealth(victim, iVictimTempHealth - 1);
 					}
-				}
-				else if (iVictimTempHealth > 1)
-				{
-					SetClientTempHealth(victim, iVictimTempHealth - 1);
 				}
 				SDKHooks_TakeDamage(victim, inflictor, attacker, 0.0, damagetype, weapon, damageForce, damagePosition);
 				SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
 				g_fLastRevBurnTime[victim] = GetGameTime();
+				g_bBurnToggle[victim] = !g_bBurnToggle[victim];
 				return Plugin_Handled;
 			}
 			if (IsFakeClient(victim))
