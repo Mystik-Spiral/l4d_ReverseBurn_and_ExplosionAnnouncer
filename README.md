@@ -4,11 +4,11 @@
 Smart reverse of burn damage from explodables (gascans, fireworks, etc.) if the victim is burned instantly and continuously.  
 It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.  
 
-Reverses the following explodable burn types:
-Gas can, barricade gas can, fuel barrel, gas pump, and fireworks crate.
+Reverses the following explodable burn types:  
+Gas can, barricade gas can, fuel barrel, gas pump, and fireworks crate.  
 
-Announces the following explosion types:
-Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank, and oxygen tank.
+Announces the following explosion types:  
+Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank, and oxygen tank.  
 
 Features:  
 - Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continuously (takes burn damage more than once per second).  
@@ -37,13 +37,13 @@ Use this plugin in conjunction with:
 **[Reverse Friendly-Fire](https://forums.alliedmods.net/showthread.php?t=329035)** (l4d_reverse_ff)  
 
 When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for throwable (molotov) and explodable (gascans, fireworks, etc.) burn types.  
-Although griefers will take significant damage, other players may not notice any difference in game play (other than laughing at stupid griefer fails).
+Although griefers will take significant damage, other players may not notice any difference in game play (other than laughing at stupid griefer fails).  
 
 Credits:  
 
 This plugin began life as **[Explosion Announcer](https://forums.alliedmods.net/showthread.php?t=328006)** by Marttt.  The original plugin kept track of explodable entities, when they were exploded, and announced who did it. I hooked on to that announcement to track whether that explodable (gascan, fireworks, etc.) instantly burned any other players, and if so, to ensure the attacker took the vast majority of the damage. If no other players are instantly burned, then burn damage is treated normally.  
 
-Want to contribute code enhancements?
+Want to contribute code enhancements?  
 Create a pull request using this GitHub repository:  
 https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer  
 
