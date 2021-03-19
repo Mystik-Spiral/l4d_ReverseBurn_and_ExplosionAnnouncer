@@ -93,7 +93,7 @@
 		"#format"		"{1:N}"
 		"en"			"{orange}{1} {lightgreen}has exploded a {olive}gas pump{lightgreen}!"
 		"es"			"{orange}{1} {lightgreen}ha explotado una {olive}bomba de gasolina{lightgreen}!"
-		"hu"			"{orange}{1} {lightgreen}felrobbantott egy {olive}benzinszivattyú{lightgreen}!"
+		"hu"			"{orange}{1} {lightgreen}felrobbantott egy {olive}benzinszivattyút{lightgreen}!"
 		"pt"			"{orange}{1} {lightgreen}explodiu uma {olive}bomba de gasolina{lightgreen}!"
 		"pt_p"			"{orange}{1} {lightgreen}explodiu uma {olive}bomba de gasolina{lightgreen}!"
 		"ru"			"{orange}{1} {lightgreen}взорвал(а) {olive}бензонасос{lightgreen}!"
@@ -119,12 +119,14 @@
 		"#format"		"{1:N}"
 		"en"			"{orange}[RBaEA] {lightgreen}You instantly burned {olive}{1}{lightgreen}, damage was reversed."
 		"fr"			"{orange}[RBaEA] {lightgreen}Vous avez instantanément brûlé {olive}{1}{lightgreen}, les dégâts ont été inversés.
+		"hu"			"{orange}[RBaEA] {lightgreen} Megégetted {olive}{2}{lightgreen}-t, a sebzés visszafordítva."
 	}
 
 	"BurnTeammate"
 	{
 		"en"			"{orange}[RBaEA] {lightgreen}You instantly burned a teammate, damage was reversed."
 		"fr"			"{orange}[RBaEA] {lightgreen}Vous avez instantanément brûlé un coéquipier, les dégâts ont été inversés."
+		"hu"			"{orange}[RBaEA] {lightgreen} Megégetted egy csapattársadat, a sebzés visszafordítva."
 	}
 
 }
