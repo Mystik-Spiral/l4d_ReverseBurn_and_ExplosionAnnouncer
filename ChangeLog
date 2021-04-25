@@ -1,6 +1,6 @@
 25-Apr-2021 v1.2
 - Add option to reverse burn when attacker is an admin.
-- Add option to reverse blast (explosion) damage [propane/oxygen tank, gas pump].
+- Add option to reverse blast (explosion) damage [propane/oxygen tank, fuel barrel, gas pump].
 
 16-Mar-2021 v1.1
 - When burn damage is reversed, victims now take half the damage of previous version.
