@@ -18,6 +18,9 @@
 		• {olive} // Green (use instead of \x05)
 
 	******************************************************************************************************************************************************
+
+Added Hungarian thanks to KasperH
+
 */
 
 "Phrases"
@@ -116,15 +119,44 @@
 
 	"BurnVictimName"
 	{
-		"#format"		"{1:N}"
-		"en"			"{orange}[RBaEA] {lightgreen}You instantly burned {olive}{1}{lightgreen}, damage was reversed."
-		"fr"			"{orange}[RBaEA] {lightgreen}Vous avez instantanément brûlé {olive}{1}{lightgreen}, les dégâts ont été inversés.
+		"#format"		"{1:s},{2:N}"
+		"en"			"{orange}{1}{lightgreen} You instantly burned {olive}{2}{lightgreen}, damage was reversed."
+		"fr"			"{orange}{1}{lightgreen} Vous avez instantanément brûlé {olive}{2}{lightgreen}, les dégâts ont été inversés."
+		"hu"			"{orange}{1}{lightgreen} Megégetted {olive}{2}{lightgreen}, a sebzés visszafordítva."
 	}
 
 	"BurnTeammate"
 	{
-		"en"			"{orange}[RBaEA] {lightgreen}You instantly burned a teammate, damage was reversed."
-		"fr"			"{orange}[RBaEA] {lightgreen}Vous avez instantanément brûlé un coéquipier, les dégâts ont été inversés."
+		"#format"		"{1:s}"
+		"en"			"{orange}{1}{lightgreen} You instantly burned a teammate, damage was reversed."
+		"fr"			"{orange}{1}{lightgreen} Vous avez instantanément brûlé un coéquipier, les dégâts ont été inversés."
+		"hu"			"{orange}{1}{lightgreen} Megégetted egy csapattársadat, a sebzés visszafordítva."
+	}
+
+	"Announce"
+	{
+		"en"			"{orange}NOTICE:{lightgreen} This server reverses explodable burn damage!"
+		"fr"			"{orange}AVIS:{lightgreen} Ce serveur sens inverse les dommages de brûlure explosifs!"
+		"hu"			"{orange}ÉRTESÍTÉS:{lightgreen} Ez a szerver visszafordítja a robbantásból adódó égési sebzést!"
+	}
+
+	"AnnounceBoth"
+	{
+		"en"			"{orange}NOTICE:{lightgreen} This server reverses burn damage!"
+		"fr"			"{orange}AVIS:{lightgreen} Ce serveur sens inverse les dommages de brûlure!"
+		"hu"			"{orange}ÉRTESÍTÉS:{lightgreen} Ez a szerver visszafordítja az égési sebzést!"
+	}
+
+	"BurnGriefer"
+	{
+		"en"			"Burn griefer"
+		"fr"			"Brûler griefer"
+	}
+
+	"ReverseBlast"
+	{
+		"en"			"{lightgreen}Your blast (explosion) damage was reversed."
+		"fr"			"{lightgreen}Vos dégâts de souffle (explosion) ont été inversés."
 	}
 
 }
