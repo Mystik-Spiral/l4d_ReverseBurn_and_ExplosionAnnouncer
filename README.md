@@ -20,6 +20,8 @@ Features:
 - Bots do not take burn damage but do move out of the fire as quickly as possible.  
 - Griefers cannot kill or incap a victim by burning them (victims still take some damage as stated above).  
 - In all other scenarios, burn damage behaves normally.  
+- Option to reverse burn damage if attacker is an admin.
+- Option to reverse blast (explosion) damage [propane/oxygen tank, fuel barrel, gas pump].
 
 Common Scenarios:  
 - Griefer attempts to kill the whole team by burning them.  
