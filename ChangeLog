@@ -1,6 +1,8 @@
 25-Apr-2021 v1.2
 - Add option to reverse burn damage if attacker is an admin. [RBaEA_admin, default: 0/false]
 - Add option to reverse blast (explosion) damage (propane/oxygen tank, fuel barrel, gas pump). [RBaEA_blast, default: 1/true]
+- Add option to ban attacker (griefer) that disconnects during reverse burn. [RBaEA_banburndisconnect, default: 1/true]
+- Add option to set ban duration in minutes. [RBaEA_banduration, default: 2880 minutes (2 days)]
 
 16-Mar-2021 v1.1
 - When burn damage is reversed, victims now take half the damage of previous version.
