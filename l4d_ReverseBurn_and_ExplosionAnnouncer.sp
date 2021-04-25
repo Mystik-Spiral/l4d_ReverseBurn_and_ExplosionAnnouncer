@@ -25,6 +25,8 @@ Features:
 - In all other scenarios, burn damage behaves normally.
 - Option to reverse burn damage if attacker is an admin.
 - Option to reverse blast (explosion) damage [propane/oxygen tank, fuel barrel, gas pump].
+- Option to ban attacker (griefer) that disconnects during reverse burn. [RBaEA_banburndisconnect, default: 1/true]
+- Option to set ban duration in minutes. [RBaEA_banduration, default: 2880 minutes (2 days)]
 
 
 Common Scenarios:
