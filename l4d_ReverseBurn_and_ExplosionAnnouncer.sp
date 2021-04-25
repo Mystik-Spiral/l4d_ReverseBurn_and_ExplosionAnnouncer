@@ -13,21 +13,27 @@ Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank
 
 
 Features:
-- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 second of ignition) and continuously (takes burn damage more than once per second).
+
+- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 seconds of ignition) and continuously (takes burn damage more than once per second).
 - If player runs into fire more than 0.75 seconds after ignition, burn damage is treated normally.
-- When burn damage is reversed, during each burn cycle (approx 6x per second):
+- When burn damage is reversed, during each burn cycle (approximately 6x per second):
 	* Attacker takes 70% damage for each instantly/continuously burned victim
 	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.
 	* Before ignition, any players already incapped or with only 1TotalHP do not take any burn damage.
 - Bots do not take burn damage but do move out of the fire as quickly as possible.
 - Griefers cannot kill or incap a victim by burning them (victims still take some damage as stated above).
 - In all other scenarios, burn damage behaves normally.
+- Option to reverse burn damage if attacker is an admin.
+- Option to reverse blast (explosion) damage [propane/oxygen tank, fuel barrel, gas pump].
 
 
 Common Scenarios:
 
 - Griefer attempts to kill the whole team by burning them.
 Usual end result: Griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage and everyone else takes relatively minor damage.
+
+- Griefer instantly burns one or more victims then disconnects while burn damage is being reversed.
+Usual end result: Griefer is auto-banned from server for two days (this is the default option but it can be changed).
 
 - Player starts fire (which does not burn anyone within 0.75 seconds) and griefer runs into it.
 Usual end result: Griefer takes normal damage and player that started the fire takes no damage.
@@ -63,7 +69,7 @@ Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
 #define PLUGIN_NAME                   "[L4D & L4D2] ReverseBurn and ExplosionAnnouncer"
 #define PLUGIN_AUTHOR                 "Mystik Spiral"
 #define PLUGIN_DESCRIPTION            "Reverses damage when victim burned instantly and continuously"
-#define PLUGIN_VERSION                "1.1"
+#define PLUGIN_VERSION                "1.2"
 #define PLUGIN_URL                    "https://forums.alliedmods.net/showthread.php?t=331164"
 
 // ====================================================================================================
@@ -156,8 +162,11 @@ static ConVar g_hCvar_OxygenTank;
 static ConVar g_hCvar_BarricadeGascan;
 static ConVar g_hCvar_GasPump;
 static ConVar g_hCvar_FireworksCrate;
-
 static ConVar g_hCvar_PillsDecayRate;				//MS
+static ConVar g_hCvar_BanBurnDisconnect;			//MS
+static ConVar g_hCvar_BanDuration;					//MS
+static ConVar g_hCvar_Admin;						//MS
+static ConVar g_hCvar_Blast;						//MS
 
 // ====================================================================================================
 // Handles
@@ -183,13 +192,15 @@ static bool g_bCvar_OxygenTank;
 static bool g_bCvar_BarricadeGascan;
 static bool g_bCvar_GasPump;
 static bool g_bCvar_FireworksCrate;
-
+static bool g_bCvar_BanBurnDisconnect;				//MS
 static bool g_bFirstBurn[MAXPLAYERS + 1];			//MS
 static bool g_bReverseBurnAtk[MAXPLAYERS + 1];		//MS
 static bool g_bReverseBurnVic[MAXPLAYERS + 1];		//MS
+static bool g_bBurnToggle[MAXPLAYERS + 1];			//MS
 static bool g_bBothRBPlugins;						//MS
 static bool g_bAllReversePlugins;					//MS
-static bool g_bBurnToggle[MAXPLAYERS + 1];			//MS
+static bool g_bCvar_Admin;							//MS
+static bool g_bCvar_Blast;							//MS
 
 // ====================================================================================================
 // int - Plugin Variables
@@ -202,7 +213,7 @@ static int g_iModel_BarricadeGascan = -1;
 static int g_iModel_GasPump = -1;
 static int g_iModel_FireworksCrate = -1;
 static int g_iCvar_Team;
-
+static int g_iCvar_BanDuration;						//MS
 static int g_iBurnVictim[MAXPLAYERS + 1];			//MS
 
 // ====================================================================================================
@@ -210,9 +221,9 @@ static int g_iBurnVictim[MAXPLAYERS + 1];			//MS
 // ====================================================================================================
 static float g_fCvar_SpamProtection;
 static float gc_fLastChatOccurrence[MAXPLAYERS+1][MAX_TYPES+1];
-
 static float g_fLastRevBurnTime[MAXPLAYERS + 1];	//MS
 static float g_fPillsDecayRate;						//MS
+static float g_fLastBlastMsg[MAXPLAYERS + 1];		//MS
 
 // ====================================================================================================
 // entity - Plugin Variables
@@ -248,6 +259,10 @@ public void OnPluginStart()
 
     CreateConVar("RBaEA_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, CVAR_FLAGS_PLUGIN_VERSION);
     g_hCvar_Enabled            = CreateConVar("RBaEA_enable", "1", "Enable/Disable the plugin.\n0 = Disable, 1 = Enable.", CVAR_FLAGS, true, 0.0, true, 1.0);
+    g_hCvar_Admin              = CreateConVar("RBaEA_admin", "0", "Reverse burn when attacker is an admin.\n0 = Do not reverse burn damage, 1 = Reverse burn damage", CVAR_FLAGS, true, 0.0, true, 1.0);					//MS
+    g_hCvar_Blast              = CreateConVar("RBaEA_blast", "1", "Reverse blast damage (propane/oxygen tank, gas pump).\n0 = Do not reverse blast damage, 1 = Reverse blast damage", CVAR_FLAGS, true, 0.0, true, 1.0);	//MS
+    g_hCvar_BanBurnDisconnect  = CreateConVar("RBaEA_banburndisconnect", "1", "Ban attacker that disconnects during reverse burn.\n0 = Do not ban, 1 = Ban", CVAR_FLAGS, true, 0.0, true, 1.0);								//MS
+    g_hCvar_BanDuration        = CreateConVar("RBaEA_banduration", "2880", "Ban duration in minutes. (0 = Permanent, Default 2880 = 2 days)", CVAR_FLAGS);																	//MS
     g_hCvar_SpamProtection     = CreateConVar("RBaEA_spam_protection", "3.0", "Delay in seconds to output to the chat the message from the same client again.\n0 = OFF.", CVAR_FLAGS, true, 0.0);
     g_hCvar_SpamTypeCheck      = CreateConVar("RBaEA_spam_type_check", "1", "Whether the plugin should apply chat spam protection by entity type.\nExample: \"gascans\" and \"propane canisters\" are of different types.\n0 = OFF, 1 = ON.", CVAR_FLAGS, true, 0.0, true, 1.0);
     g_hCvar_Team               = CreateConVar("RBaEA_team", "1", "Which teams should the message be transmitted to.\n0 = NONE, 1 = SURVIVOR, 2 = INFECTED, 4 = SPECTATOR, 8 = HOLDOUT.\nAdd numbers greater than 0 for multiple options.\nExample: \"3\", enables for SURVIVOR and INFECTED.", CVAR_FLAGS, true, 0.0, true, 15.0);
@@ -265,6 +280,10 @@ public void OnPluginStart()
     
     // Hook plugin ConVars change
     g_hCvar_Enabled.AddChangeHook(Event_ConVarChanged);
+    g_hCvar_Admin.AddChangeHook(Event_ConVarChanged);				//MS
+    g_hCvar_Blast.AddChangeHook(Event_ConVarChanged);				//MS
+    g_hCvar_BanBurnDisconnect.AddChangeHook(Event_ConVarChanged);	//MS
+    g_hCvar_BanDuration.AddChangeHook(Event_ConVarChanged);			//MS
     g_hCvar_SpamProtection.AddChangeHook(Event_ConVarChanged);
     g_hCvar_SpamTypeCheck.AddChangeHook(Event_ConVarChanged);
     g_hCvar_Team.AddChangeHook(Event_ConVarChanged);
@@ -352,8 +371,11 @@ public void GetCvars()
     g_bCvar_GasPump = g_hCvar_GasPump.BoolValue;
     if (g_bL4D2)
         g_bCvar_FireworksCrate = g_hCvar_FireworksCrate.BoolValue;
-        
-    g_fPillsDecayRate = g_hCvar_PillsDecayRate.FloatValue;		//MS
+    g_fPillsDecayRate = g_hCvar_PillsDecayRate.FloatValue;				//MS
+    g_bCvar_Admin = g_hCvar_Admin.BoolValue;							//MS
+    g_bCvar_Blast = g_hCvar_Blast.BoolValue;							//MS
+    g_bCvar_BanBurnDisconnect = g_hCvar_BanBurnDisconnect.BoolValue;	//MS
+    g_iCvar_BanDuration = g_hCvar_BanDuration.IntValue;					//MS
 }
 
 /****************************************************************************************************/
@@ -415,6 +437,14 @@ public void OnClientDisconnect(int client)
 	{
 		gc_fLastChatOccurrence[client][type] = 0.0;
 	}
+	
+	if (g_bReverseBurnAtk[client] && g_bCvar_BanBurnDisconnect)										//MS
+	{																								//MS
+		//ban attacker for disconnecting during reverse burn										//MS
+		char BanMsg[50];																			//MS
+		Format(BanMsg, sizeof(BanMsg), "%t", "BurnGriefer", client);								//MS
+		BanClient(client, g_iCvar_BanDuration, BANFLAG_AUTO, "BurnGriefer", BanMsg, _, client);		//MS
+	}																								//MS
 }
 
 /****************************************************************************************************/
@@ -451,6 +481,12 @@ public void LateLoad()
     {
         RequestFrame(OnNextFrame, EntIndexToEntRef(entity));
     }
+    
+    for (int client = 1; client <= MaxClients; client++)	//MS
+	{														//MS
+		if (IsClientInGame(client))							//MS
+			OnClientPutInServer(client);					//MS
+	}														//MS
 }
 
 /****************************************************************************************************/
@@ -1005,12 +1041,12 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 		//check for burn damage
 		if (damagetype & DMG_BURN)
 		{
-			//check if burnable ignited in the last 0.75 second by the current attacker
+			//check if burnable ignited in the last 0.75 seconds by the current attacker
 			if (g_bFirstBurn[attacker])
 			{
 				//set burn victim id to the attacker id
 				g_iBurnVictim[victim] = attacker;
-				//no damage dealt during first 0.75 second of burn
+				//no damage dealt during first 0.75 seconds of burn
 				return Plugin_Handled;
 			}
 			float fGameTime = GetGameTime();
@@ -1020,7 +1056,12 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				//if victim not burned in last second then handle normal, not reversed
 				g_bReverseBurnVic[victim] = false;
 			}
-			//if both attacker and victim reverse burn flags match then reverse burn
+			if (IsClientAdmin(attacker) && !g_bCvar_Admin)
+			{
+				//if attacker is admin and RBaEA_admin set to false do not reverse burn
+				g_bReverseBurnAtk[attacker] = false;
+			}
+			//if both attacker and victim reverse burn flags are true then reverse burn
 			if (g_bReverseBurnAtk[attacker] && g_bReverseBurnVic[victim])
 			{
 				//set the percent amount of damage for attacker and victim
@@ -1084,6 +1125,25 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				return Plugin_Handled;
 			}
 		}
+		//if damage is of type blast (explosion, like propane/oxygen tank)
+		if (damagetype & DMG_BLAST && g_bCvar_Blast)
+		{
+			//PrintToServer("Blast - Vic: %N, Atk: %N, Inf: %s", victim, attacker, inflictor);
+			if (IsClientAdmin(attacker) && !g_bCvar_Admin)
+			{
+				//if attacker is admin and RBaEA_admin is false, do not reverse blast damage
+				return Plugin_Handled;
+			}
+			//reverse blast damage
+			SDKHooks_TakeDamage(attacker, inflictor, victim, damage, damagetype, weapon, damageForce, damagePosition);
+			//prevent spamming reverse blast messages...one message max every quarter second
+			if ((g_fLastBlastMsg[attacker] == 0) || (GetGameTime() - g_fLastBlastMsg[attacker] > 0.25))
+			{
+				CPrintToChat(attacker, "%T", "ReverseBlast", attacker);
+				g_fLastBlastMsg[attacker] = GetGameTime();
+			}
+			return Plugin_Handled;
+		}
 	}
 	return Plugin_Continue;
 }
@@ -1111,7 +1171,7 @@ public Action BeginBurnTimer(Handle timer, int client)
 			g_fLastRevBurnTime[iVictim] = 0.0;
 		}
 	}
-	//clear flag that indicates first second of burnable being ignited
+	//clear flag that indicates first 0.75 seconds of burnable being ignited
 	g_bFirstBurn[client] = false;
 	//clear handle for this timer
 	g_hBeginBurn[client] = null;
@@ -1124,12 +1184,8 @@ public Action FinishBurnTimer(Handle timer, DataPack pack)
 	pack.Reset();
 	iAttacker = pack.ReadCell();
 	iVictim = pack.ReadCell();
-	//fire is out so clear reverse burn flags for attacker and victim and clear timer handle
-	g_bReverseBurnAtk[iAttacker] = false;
-	g_bReverseBurnVic[iVictim] = false;
-	g_hFinishBurn[iAttacker] = null;
 	//to prevent message spam wait until fire is out to display message to attacker
-	if (IsValidClientAndInGameAndSurvivor(iAttacker))
+	if (IsValidClientAndInGameAndSurvivor(iAttacker) && g_bReverseBurnAtk[iAttacker])
 	{
 		if (IsValidClientAndInGameAndSurvivor(iVictim))
 		{
@@ -1158,6 +1214,10 @@ public Action FinishBurnTimer(Handle timer, DataPack pack)
 			}
 		}
 	}
+	//fire is out so clear reverse burn flags for attacker and victim and clear timer handle
+	g_bReverseBurnAtk[iAttacker] = false;
+	g_bReverseBurnVic[iVictim] = false;
+	g_hFinishBurn[iAttacker] = null;
 }
 
 stock bool IsValidClientAndInGameAndSurvivor(int client)
@@ -1204,6 +1264,11 @@ public Action AnnouncePlugin(Handle timer, int client)
 			CPrintToChat(client, "%T", "Announce", client);
 		}
 	}
+}
+
+stock bool IsClientAdmin(int client)
+{
+    return CheckCommandAccess(client, "generic_admin", ADMFLAG_GENERIC, false);
 }
 
 /****************************************************************************************************/
