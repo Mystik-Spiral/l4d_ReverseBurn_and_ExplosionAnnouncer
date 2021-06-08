@@ -1,67 +1,70 @@
 /*
 
 ReverseBurn and ExplosionAnnouncer (l4d_ReverseBurn_and_ExplosionAnnouncer) by Mystik Spiral
+  
+Smart reverse of burn damage from explodables (gascans, fireworks, etc.) if the victim is burned instantly and continuously.  
+It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.  
+  
+Reverses the following explodable burn types:  
+Gas can, barricade gas can, fuel barrel, gas pump, and fireworks crate.  
+  
+Announces the following explosion types:  
+Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank, and oxygen tank.  
+  
+  
+Features:  
+  
+- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 seconds of ignition) and continuously (takes burn damage more than once per second).  
+- If player runs into fire more than 0.75 seconds after ignition, burn damage is treated normally.  
+- When burn damage is reversed, during each burn cycle (approximately 6x per second):  
+	* Attacker takes 70% damage for each instantly/continuously burned victim  
+	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.  
+	* Before ignition, any players already incapped or with only 1TotalHP do not take any burn damage.  
+- Bots do not take burn damage but do move out of the fire as quickly as possible.  
+- Griefers cannot kill or incap a victim by burning them (victims still take some damage as stated above).  
+- In all other scenarios, burn damage behaves normally.  
+- Option to reverse burn/blast damage if attacker is an admin. [RBaEA_admin, default: 0/false]  
+- Option to reverse blast/explosion damage. [RBaEA_blast, default: 1/true]  
+- Option to ban attacker (griefer) that disconnects during reverse burn. [RBaEA_banburndisconnect, default: 1/true]  
+- Option to set ban duration in minutes. [RBaEA_banduration, default: 2880 minutes (2 days)]  
+  
+  
+Common Scenarios:  
+  
+- Griefer attempts to kill the whole team by burning them.  
+Usual end result: Griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage and everyone else takes relatively minor damage.  
+  
+- Griefer instantly burns one or more victims then disconnects while burn damage is being reversed.  
+Usual end result: Griefer is auto-banned from server for two days (this is the default option but it can be changed).  
+  
+- Player starts fire (which does not burn anyone within 0.75 seconds) and griefer runs into it.  
+Usual end result: Griefer takes normal damage and player that started the fire takes no damage.  
+  
+  
+Suggestion:  
+  
+To minimize griefer impact, use the ReverseBurn and ExplosionAnnouncer plugin along with...  
+  
+ReverseBurn and ThrowableAnnouncer (l4d_ReverseBurn_and_ThrowableAnnouncer)  
+- Smart reverse of burn damage from throwables, specifically molotovs.  
+- Option to reverse blast damage, like pipe bombs.  
+  
+Reverse Friendly-Fire (l4d_reverse_ff)  
+- Reverses friendly-fire...attacker takes damage, victim does not.  
+  
+When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for throwable (molotov) and explodable (gascans, fireworks, etc.) burn types.  
+Although griefers will take significant damage, other players may not notice any difference in game play (other than laughing at stupid griefer fails).  
+  
+  
+Credits:  
+  
+This plugin began life as "Explosion Announcer" by Marttt.  The original plugin kept track of explodable entities, when they were exploded, and announced who did it. I hooked on to that announcement to track whether that explodable (gascan, fireworks, etc.) instantly burned any other players, and if so, to ensure the attacker took the vast majority of the damage. If no other players are instantly burned, then burn damage is treated normally.  
+  
+Want to contribute code enhancements?  
+Create a pull request using this GitHub repository:  
+https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer  
 
-Smart reverse of burn damage from explodables (gascans, fireworks, etc.) if the victim is burned instantly and continuously.
-It was created to help mitigate the damage by griefers attempting to kill/incap their teammates by burning them.
-
-Reverses the following explodable burn types:
-Gas can, barricade gas can, fuel barrel, gas pump, and fireworks crate.
-
-Announces the following explosion types:
-Gas can, barricade gas can, fuel barrel, gas pump, fireworks crate, propane tank, and oxygen tank.
-
-
-Features:
-
-- Burn damage is reversed only if victim(s) are burned instantly (within 0.75 seconds of ignition) and continuously (takes burn damage more than once per second).
-- If player runs into fire more than 0.75 seconds after ignition, burn damage is treated normally.
-- When burn damage is reversed, during each burn cycle (approximately 6x per second):
-	* Attacker takes 70% damage for each instantly/continuously burned victim
-	* Standing burn victims lose 1PermHP which is converted to 2TempHP as incentive to move out of the fire quickly.
-	* Before ignition, any players already incapped or with only 1TotalHP do not take any burn damage.
-- Bots do not take burn damage but do move out of the fire as quickly as possible.
-- Griefers cannot kill or incap a victim by burning them (victims still take some damage as stated above).
-- In all other scenarios, burn damage behaves normally.
-- Option to reverse burn damage if attacker is an admin.
-- Option to reverse blast (explosion) damage [propane/oxygen tank, fuel barrel, gas pump].
-- Option to ban attacker (griefer) that disconnects during reverse burn. [RBaEA_banburndisconnect, default: 1/true]
-- Option to set ban duration in minutes. [RBaEA_banduration, default: 2880 minutes (2 days)]
-
-
-Common Scenarios:
-
-- Griefer attempts to kill the whole team by burning them.
-Usual end result: Griefer takes 210% damage (70% per victim x 3 victims) plus possible additional self-damage and everyone else takes relatively minor damage.
-
-- Griefer instantly burns one or more victims then disconnects while burn damage is being reversed.
-Usual end result: Griefer is auto-banned from server for two days (this is the default option but it can be changed).
-
-- Player starts fire (which does not burn anyone within 0.75 seconds) and griefer runs into it.
-Usual end result: Griefer takes normal damage and player that started the fire takes no damage.
-
-
-Suggestion:
-
-To minimize griefer impact, use this plugin along with...
-
-"ReverseBurn and ThrowableAnnouncer" (l4d_ReverseBurn_and_ThrowableAnnouncer)
-...and...
-"Reverse Friendly-Fire" (l4d_reverse_ff)
-
-When these plugins are combined, griefers cannot inflict friendly-fire, and it minimizes damage to victims for throwable (molotov) and explodable (gascans, fireworks, etc.) burn types.
-Although griefers will take significant damage, other players may not notice any difference in game play (other than laughing at stupid griefer fails).
-
-
-Credits:
-
-This plugin began life as "Explosion Announcer" by Marttt.  The original plugin kept track of explodable entities, when they were exploded, and announced who did it. I hooked on to that announcement to track whether that explodable (gascan, fireworks, etc.) instantly burned any other players, and if so, to ensure the attacker took the vast majority of the damage. If no other players are instantly burned, then burn damage is treated normally.
-
-Want to contribute code enhancements?
-Create a pull request using this GitHub repository:
-https://github.com/Mystik-Spiral/l4d_ReverseBurn_and_ExplosionAnnouncer
-
-Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
+Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164  
 
 */
 
@@ -71,7 +74,7 @@ Plugin discussion: https://forums.alliedmods.net/showthread.php?t=331164
 #define PLUGIN_NAME                   "[L4D & L4D2] ReverseBurn and ExplosionAnnouncer"
 #define PLUGIN_AUTHOR                 "Mystik Spiral"
 #define PLUGIN_DESCRIPTION            "Reverses damage when victim burned instantly and continuously"
-#define PLUGIN_VERSION                "1.2"
+#define PLUGIN_VERSION                "1.3"
 #define PLUGIN_URL                    "https://forums.alliedmods.net/showthread.php?t=331164"
 
 // ====================================================================================================
@@ -198,9 +201,9 @@ static bool g_bCvar_BanBurnDisconnect;				//MS
 static bool g_bFirstBurn[MAXPLAYERS + 1];			//MS
 static bool g_bReverseBurnAtk[MAXPLAYERS + 1];		//MS
 static bool g_bReverseBurnVic[MAXPLAYERS + 1];		//MS
-static bool g_bBurnToggle[MAXPLAYERS + 1];			//MS
 static bool g_bBothRBPlugins;						//MS
 static bool g_bAllReversePlugins;					//MS
+static bool g_bReverseFFPlugin;						//MS
 static bool g_bCvar_Admin;							//MS
 static bool g_bCvar_Blast;							//MS
 
@@ -217,6 +220,7 @@ static int g_iModel_FireworksCrate = -1;
 static int g_iCvar_Team;
 static int g_iCvar_BanDuration;						//MS
 static int g_iBurnVictim[MAXPLAYERS + 1];			//MS
+static int g_iBurnToggle[MAXPLAYERS + 1];			//MS
 
 // ====================================================================================================
 // float - Plugin Variables
@@ -261,7 +265,7 @@ public void OnPluginStart()
 
     CreateConVar("RBaEA_version", PLUGIN_VERSION, PLUGIN_DESCRIPTION, CVAR_FLAGS_PLUGIN_VERSION);
     g_hCvar_Enabled            = CreateConVar("RBaEA_enable", "1", "Enable/Disable the plugin.\n0 = Disable, 1 = Enable.", CVAR_FLAGS, true, 0.0, true, 1.0);
-    g_hCvar_Admin              = CreateConVar("RBaEA_admin", "0", "Reverse burn when attacker is an admin.\n0 = Do not reverse burn damage, 1 = Reverse burn damage", CVAR_FLAGS, true, 0.0, true, 1.0);					//MS
+    g_hCvar_Admin              = CreateConVar("RBaEA_admin", "0", "Reverse burn/blast when attacker is an admin.\n0 = Do not reverse burn/blast damage for admins, 1 = Reverse burn/blast damage for admins", CVAR_FLAGS, true, 0.0, true, 1.0);					//MS
     g_hCvar_Blast              = CreateConVar("RBaEA_blast", "1", "Reverse blast damage (propane/oxygen tank, gas pump).\n0 = Do not reverse blast damage, 1 = Reverse blast damage", CVAR_FLAGS, true, 0.0, true, 1.0);	//MS
     g_hCvar_BanBurnDisconnect  = CreateConVar("RBaEA_banburndisconnect", "1", "Ban attacker that disconnects during reverse burn.\n0 = Do not ban, 1 = Ban", CVAR_FLAGS, true, 0.0, true, 1.0);								//MS
     g_hCvar_BanDuration        = CreateConVar("RBaEA_banduration", "2880", "Ban duration in minutes. (0 = Permanent, Default 2880 = 2 days)", CVAR_FLAGS);																	//MS
@@ -1027,6 +1031,10 @@ public void OnAllPluginsLoaded()
 			g_bAllReversePlugins = true;
 		}
 	}
+	if (FindConVar("reverseff_version"))
+	{
+		g_bReverseFFPlugin = true;
+	}
 }
 
 public void OnClientPutInServer(int client)
@@ -1058,10 +1066,16 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				//if victim not burned in last second then handle normal, not reversed
 				g_bReverseBurnVic[victim] = false;
 			}
-			if (IsClientAdmin(attacker) && !g_bCvar_Admin)
+			if ((IsClientAdmin(attacker) && !g_bCvar_Admin) || (IsIncendiaryAmmo(weapon, attacker, inflictor, damagetype) && g_bReverseFFPlugin))
 			{
-				//if attacker is admin and RBaEA_admin set to false do not reverse burn
+				//if attacker is admin and RBaEA_admin set to false, or...
+				//if weapon is using incendiary ammo and ReverseFF plugin is loaded, do not reverse burn
 				g_bReverseBurnAtk[attacker] = false;
+			}
+			//probably not needed, but if human attacker disconnects, do not burn bot that takes over
+			if  (IsFakeClient(attacker))
+			{
+				return Plugin_Handled;
 			}
 			//if both attacker and victim reverse burn flags are true then reverse burn
 			if (g_bReverseBurnAtk[attacker] && g_bReverseBurnVic[victim])
@@ -1089,8 +1103,8 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 					g_fLastRevBurnTime[victim] = GetGameTime();
 					return Plugin_Handled;
 				}
-				//inflict actual damage to burn victim only once every two calls from OnTakeDamage
-				if (!g_bBurnToggle[victim])
+				//inflict actual damage to burn victim only once every four calls from OnTakeDamage
+				if (g_iBurnToggle[victim] < 1)
 				{
 					//as incentive for standing victims to get out of the fire quickly...
 					//if >1 PermHP remove 1PermHP and add 2TempHP, otherwise if >1 TempHP remove 1TempHP
@@ -1110,11 +1124,15 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 					{
 						SetClientTempHealth(victim, iVictimTempHealth - 1);
 					}
+					SDKHooks_TakeDamage(victim, inflictor, attacker, 0.0, damagetype, weapon, damageForce, damagePosition);
+					SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
+					g_fLastRevBurnTime[victim] = GetGameTime();
 				}
-				SDKHooks_TakeDamage(victim, inflictor, attacker, 0.0, damagetype, weapon, damageForce, damagePosition);
-				SDKHooks_TakeDamage(attacker, inflictor, attacker, fAttackerDamage, damagetype, weapon, damageForce, damagePosition);
-				g_fLastRevBurnTime[victim] = GetGameTime();
-				g_bBurnToggle[victim] = !g_bBurnToggle[victim];
+				g_iBurnToggle[victim] += 1;
+				if (g_iBurnToggle[victim] > 3)
+				{
+					g_iBurnToggle[victim] = 0;
+				}
 				return Plugin_Handled;
 			}
 			if (IsFakeClient(victim))
@@ -1127,13 +1145,22 @@ public Action OnTakeDamage_Player(int victim, int &attacker, int &inflictor, flo
 				return Plugin_Handled;
 			}
 		}
-		//if damage is of type blast (explosion, like propane/oxygen tank)
+		//if damage is of type blast (explosion)
 		if (damagetype & DMG_BLAST && g_bCvar_Blast)
 		{
-			//PrintToServer("Blast - Vic: %N, Atk: %N, Inf: %s", victim, attacker, inflictor);
-			if (IsClientAdmin(attacker) && !g_bCvar_Admin)
+			char sInflictorClass[64];
+			if (inflictor > MaxClients)
 			{
-				//if attacker is admin and RBaEA_admin is false, do not reverse blast damage
+				GetEdictClassname(inflictor, sInflictorClass, sizeof(sInflictorClass));
+			}
+			//is weapon grenade launcher
+			bool bWeaponGL = IsWeaponGrenadeLauncher(sInflictorClass);
+			//PrintToServer("Blast - Vic: %N, Atk: %N, Inf: %s", victim, attacker, inflictor);
+			if ((IsClientAdmin(attacker) && !g_bCvar_Admin) || (bWeaponGL && g_bReverseFFPlugin) || (IsExplosiveAmmo(weapon, attacker, inflictor, damagetype) && g_bReverseFFPlugin))
+			{
+				//if attacker is admin and RBaEA_admin is false, or...
+				//if weapon is grenade launcher and ReverseFF plugin is loaded, or...
+				//if weapon is using explosive ammo and ReverseFF plugin is loaded, do not reverse explosion damage
 				return Plugin_Handled;
 			}
 			//reverse blast damage
@@ -1271,6 +1298,31 @@ public Action AnnouncePlugin(Handle timer, int client)
 stock bool IsClientAdmin(int client)
 {
     return CheckCommandAccess(client, "generic_admin", ADMFLAG_GENERIC, false);
+}
+
+stock bool IsWeaponGrenadeLauncher(char[] sInflictorClass)
+{
+	return (StrEqual(sInflictorClass, "grenade_launcher_projectile"));
+}
+
+stock bool IsExplosiveAmmo(int weapon, int attacker, int inflictor, int damagetype)
+{
+	//damage from gun with explosive ammo
+	if ((weapon > 0 && attacker == inflictor) && (damagetype & DMG_BLAST))
+	{
+		return true;
+	}
+	return false;
+}
+
+stock bool IsIncendiaryAmmo(int weapon, int attacker, int inflictor, int damagetype)
+{
+	//damage from gun with incendiary ammo
+	if ((weapon > 0 && attacker == inflictor) && (damagetype & DMG_BURN))
+	{
+		return true;
+	}
+	return false;
 }
 
 /****************************************************************************************************/
