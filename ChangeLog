@@ -1,3 +1,6 @@
+08-Jun-2021 v1.2.1
+- Reduce burn damage to victims by 75%.
+
 25-Apr-2021 v1.2
 - Add option to reverse burn damage if attacker is an admin. [RBaEA_admin, default: 0/false]
 - Add option to reverse blast (explosion) damage (propane/oxygen tank, fuel barrel, gas pump). [RBaEA_blast, default: 1/true]
