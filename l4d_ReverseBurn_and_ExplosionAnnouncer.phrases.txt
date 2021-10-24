@@ -123,6 +123,7 @@ Added Hungarian thanks to KasperH
 		"en"			"{orange}{1}{lightgreen} You instantly burned {olive}{2}{lightgreen}, damage was reversed."
 		"fr"			"{orange}{1}{lightgreen} Vous avez instantanément brûlé {olive}{2}{lightgreen}, les dégâts ont été inversés."
 		"hu"			"{orange}{1}{lightgreen} Megégetted {olive}{2}{lightgreen}, a sebzés visszafordítva."
+		"ru"			"{orange}{1}{lightgreen} Вы мгновенно сожгли {olive}{2}{lightgreen}, урон был отражён обратно вам."
 	}
 
 	"BurnTeammate"
@@ -131,6 +132,7 @@ Added Hungarian thanks to KasperH
 		"en"			"{orange}{1}{lightgreen} You instantly burned a teammate, damage was reversed."
 		"fr"			"{orange}{1}{lightgreen} Vous avez instantanément brûlé un coéquipier, les dégâts ont été inversés."
 		"hu"			"{orange}{1}{lightgreen} Megégetted egy csapattársadat, a sebzés visszafordítva."
+		"ru"			"{orange}{1}{lightgreen} Вы мгновенно сожгли товарища по команде, урон был отражён обратно вам."
 	}
 
 	"Announce"
@@ -138,6 +140,7 @@ Added Hungarian thanks to KasperH
 		"en"			"{orange}NOTICE:{lightgreen} This server reverses explodable burn damage!"
 		"fr"			"{orange}AVIS:{lightgreen} Ce serveur sens inverse les dommages de brûlure explosifs!"
 		"hu"			"{orange}ÉRTESÍTÉS:{lightgreen} Ez a szerver visszafordítja a robbantásból adódó égési sebzést!"
+		"ru"			"{orange}ВНИМАНИЕ:{lightgreen} Этот сервер имеет обратный урон от огня!"
 	}
 
 	"AnnounceBoth"
@@ -145,18 +148,21 @@ Added Hungarian thanks to KasperH
 		"en"			"{orange}NOTICE:{lightgreen} This server reverses burn damage!"
 		"fr"			"{orange}AVIS:{lightgreen} Ce serveur sens inverse les dommages de brûlure!"
 		"hu"			"{orange}ÉRTESÍTÉS:{lightgreen} Ez a szerver visszafordítja az égési sebzést!"
+		"ru"			"{orange}ВНИМАНИЕ:{lightgreen} Этот сервер имеет обратный урон от огня!"
 	}
 
 	"BurnGriefer"
 	{
 		"en"			"Burn griefer"
 		"fr"			"Brûler griefer"
+		"ru"			"Сжечь за неподобающее поведение"
 	}
 
 	"ReverseBlast"
 	{
 		"en"			"{lightgreen}Your blast (explosion) damage was reversed."
 		"fr"			"{lightgreen}Vos dégâts de souffle (explosion) ont été inversés."
+		"ru"			"{lightgreen}Ваш урон от взрыва был отражён обратно."
 	}
 
 }
